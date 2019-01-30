@@ -27,6 +27,7 @@ Parameters:
   databasename:
     Type: String
     Description: "name for the database"
+    Default: postgres
   dbuser:
     Type: String
     Description: "database user name e.g. wordpress"
@@ -105,6 +106,8 @@ Resources:
       MonitoringRoleArn: !GetAtt ["dbmonitorRole", "Arn"]
       #PerformanceInsightsKMSKeyId: String #figure this out
       #PerformanceInsightsRetentionPeriod: 14 #14 days retention
+      #PreferredBackupWindow: "09:01-09:31" #GMT
+      #PreferredMaintenanceWindow: "Mon:07:11-Mon:07:41" #GMT
       #StorageEncrypted: true
       StorageType: !FindInMap [InstanceSize, !Ref EnvironmentSize, STORTYPE]
       Tags:
