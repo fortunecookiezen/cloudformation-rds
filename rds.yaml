@@ -78,7 +78,7 @@ Resources:
           Value: "dbsubnetgroup" 
   rdsinstance:
     Type: "AWS::RDS::DBInstance"
-    DeletionPolicy: Retain
+    DeletionPolicy: Snapshot
     UpdateReplacePolicy: Snapshot
     Properties:
       AllocatedStorage: !FindInMap [InstanceSize, !Ref EnvironmentSize, SIZE] #Parameter minimum of 20 for gp2 Parameter groups example?
