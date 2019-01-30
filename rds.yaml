@@ -24,6 +24,10 @@ Parameters:
     Type: String
     Description: "database subnet group description"
     Default: "database subnet group spread across two subnets"
+  databaseInstanceName:
+    Type: String
+    Description: "Name for the RDS database instance"
+    Default: postgresInstance
   databasename:
     Type: String
     Description: "name for the database"
@@ -88,6 +92,7 @@ Resources:
       BackupRetentionPeriod: 30
       CopyTagsToSnapshot: true #until proven otherwise
       DBInstanceClass: !FindInMap [InstanceSize, !Ref EnvironmentSize, DB]
+      DBInstanceIdentifier: !Ref databaseInstanceName
       DBName: !Ref databasename
       DBSubnetGroupName: !Ref dbsubnetgroup
       DeletionProtection: false #for testing, change to true
