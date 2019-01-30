@@ -96,7 +96,7 @@ Resources:
     UpdateReplacePolicy: Snapshot
     Properties:
       AllocatedStorage: !FindInMap [InstanceSize, !Ref EnvironmentSize, SIZE] #Parameter minimum of 20 for gp2 Parameter groups example?
-      AllowMajorVersionUpgrade: true
+      AllowMajorVersionUpgrade: false #setting this as a safety
       AutoMinorVersionUpgrade: false #maybe this should be false. autoupgrade will break automation
       BackupRetentionPeriod: 30
       CopyTagsToSnapshot: true #until proven otherwise
