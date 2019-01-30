@@ -1,0 +1,125 @@
+---
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Template to create an RDS instance and a DB subnet group for use in a VPC. Template creates a postgres instance in a single availability zone'
+Parameters:
+  vpcid:
+    Description: "Id of the vpc to deploy in"
+    Type: AWS::EC2::VPC::Id
+    ConstraintDescription: "Must be a valid VPC"
+  dbsubnetids:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: "need two subnet ids for database subnet group"
+  securitygroup:
+    Type: AWS::EC2::SecurityGroup::Id
+    Description: "EC2 Security group for database instance"
+  EnvironmentSize:
+    Type: String
+    Default: SMALL
+    AllowedValues:
+      - SMALL
+      - MEDIUM
+      - LARGE
+    Description: Select Environment Size (S = 5GB, M = 20GB,L = 50GB)
+  dbsubnetgroupdescription:
+    Type: String
+    Description: "database subnet group description"
+    Default: "database subnet group spread across two subnets"
+  databasename:
+    Type: String
+    Description: "name for the database"
+  dbuser:
+    Type: String
+    Description: "database user name e.g. wordpress"
+    Default: postgres
+  dbpassword:
+    Type: String
+    Description: "database password"
+    NoEcho: true
+Mappings:
+  InstanceSize:
+    SMALL:
+      "SIZE" : "5"
+      "DB" : "db.t2.small"
+      "STORTYPE" : "standard"
+    MEDIUM:
+      "SIZE" : "20"
+      "DB" : "db.t2.medium"
+      "STORTYPE" : "gp2"
+    LARGE:
+      "SIZE" : "50"
+      "DB" : "db.t2.large"
+      "STORTYPE" : "gp2"
+Resources:
+  dbmonitorRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole'
+      AssumeRolePolicyDocument:
+        Version: '2008-10-17'
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service: 'rds.amazonaws.com'
+          Action: 'sts:AssumeRole'
+        - Effect: Allow
+          Principal:
+            Service: 'monitoring.rds.amazonaws.com'
+          Action: 'sts:AssumeRole'
+  dbsubnetgroup:
+    Type: "AWS::RDS::DBSubnetGroup"
+    Properties: 
+      DBSubnetGroupDescription: !Ref dbsubnetgroupdescription
+      SubnetIds:
+        - !Select [0, !Ref dbsubnetids]
+        - !Select [1, !Ref dbsubnetids]
+      Tags:
+        - Key: "Name"
+          Value: "dbsubnetgroup" 
+  rdsinstance:
+    Type: "AWS::RDS::DBInstance"
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      AllocatedStorage: !FindInMap [InstanceSize, !Ref EnvironmentSize, SIZE] #Parameter minimum of 20 for gp2 Parameter groups example?
+      AllowMajorVersionUpgrade: true
+      AutoMinorVersionUpgrade: true #maybe this should be false. autoupgrade will break automation
+      BackupRetentionPeriod: 30
+      CopyTagsToSnapshot: true #until proven otherwise
+      DBInstanceClass: !FindInMap [InstanceSize, !Ref EnvironmentSize, DB]
+      DBName: !Ref databasename
+      DBSubnetGroupName: !Ref dbsubnetgroup
+      DeletionProtection: false #for testing, change to true
+      DeleteAutomatedBackups: false #parameter
+      DeletionProtection: false #parameter
+      EnableCloudwatchLogsExports:
+        - postgresql
+        - upgrade
+      #EnablePerformanceInsights: true #figure this out does not work for small instance size.
+      Engine: postgres #parameter list?
+      EngineVersion: 10.6 #is this an input field?
+      # KmsKeyId: !Ref kmskey implement later
+      MasterUsername: !Ref dbuser
+      MasterUserPassword: !Ref dbpassword #implement later to pull from ssm parameter store
+      MonitoringInterval: 60 #60 second intervals
+      MonitoringRoleArn: !GetAtt ["dbmonitorRole", "Arn"]
+      #PerformanceInsightsKMSKeyId: String #figure this out
+      #PerformanceInsightsRetentionPeriod: 14 #14 days retention
+      #StorageEncrypted: true
+      StorageType: !FindInMap [InstanceSize, !Ref EnvironmentSize, STORTYPE]
+      Tags:
+        - Key: Name
+          Value: !Ref databasename
+      VPCSecurityGroups: #parameter
+        - !Ref securitygroup
+Outputs:
+  dburl:
+    Description: "database url"
+    Value: !GetAtt rdsinstance.Endpoint.Address
+    Export:
+      Name: !Sub '${AWS::StackName}-rdsinstance-url'
+  dbport:
+    Description: "database port"
+    Value: !GetAtt rdsinstance.Endpoint.Port
+    Export:
+      Name: !Sub '${AWS::StackName}-rdsinstance-port'
