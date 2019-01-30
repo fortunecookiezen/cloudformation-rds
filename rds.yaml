@@ -12,6 +12,15 @@ Parameters:
   securitygroup:
     Type: AWS::EC2::SecurityGroup::Id
     Description: "EC2 Security group for database instance"
+  DatabaseEngine:
+    Type: String
+    Default: postgres
+    AllowedValues:
+      - postgres
+  DatabaseEngineVersion:
+    Type: String
+    Default: 10.6
+    Description: "Database Engine Version - accept the default unless you know what you're doing"
   EnvironmentSize:
     Type: String
     Default: SMALL
@@ -88,22 +97,21 @@ Resources:
     Properties:
       AllocatedStorage: !FindInMap [InstanceSize, !Ref EnvironmentSize, SIZE] #Parameter minimum of 20 for gp2 Parameter groups example?
       AllowMajorVersionUpgrade: true
-      AutoMinorVersionUpgrade: true #maybe this should be false. autoupgrade will break automation
+      AutoMinorVersionUpgrade: false #maybe this should be false. autoupgrade will break automation
       BackupRetentionPeriod: 30
       CopyTagsToSnapshot: true #until proven otherwise
       DBInstanceClass: !FindInMap [InstanceSize, !Ref EnvironmentSize, DB]
       DBInstanceIdentifier: !Ref databaseInstanceName
       DBName: !Ref databasename
       DBSubnetGroupName: !Ref dbsubnetgroup
-      DeletionProtection: false #for testing, change to true
-      DeleteAutomatedBackups: false #parameter
-      DeletionProtection: false #parameter
+      DeleteAutomatedBackups: false #parameter?
+      DeletionProtection: false #parameter?
       EnableCloudwatchLogsExports:
         - postgresql
         - upgrade
       #EnablePerformanceInsights: true #figure this out does not work for small instance size.
-      Engine: postgres #parameter list?
-      EngineVersion: 10.6 #is this an input field?
+      Engine: !Ref DatabaseEngine #postgres
+      EngineVersion: !Ref DatabaseEngineVersion
       # KmsKeyId: !Ref kmskey implement later
       MasterUsername: !Ref dbuser
       MasterUserPassword: !Ref dbpassword #implement later to pull from ssm parameter store
@@ -118,7 +126,7 @@ Resources:
       Tags:
         - Key: Name
           Value: !Ref databasename
-      VPCSecurityGroups: #parameter
+      VPCSecurityGroups:
         - !Ref securitygroup
 Outputs:
   dburl:
