@@ -121,7 +121,7 @@ Resources:
       #PerformanceInsightsRetentionPeriod: 14 #14 days retention
       #PreferredBackupWindow: "09:01-09:31" #GMT
       #PreferredMaintenanceWindow: "Mon:07:11-Mon:07:41" #GMT
-      #StorageEncrypted: true
+      StorageEncrypted: true
       StorageType: !FindInMap [InstanceSize, !Ref EnvironmentSize, STORTYPE]
       Tags:
         - Key: Name
