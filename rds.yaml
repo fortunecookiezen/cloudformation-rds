@@ -65,6 +65,7 @@ Parameters:
   dbpassword:
     Type: String
     Description: "database password"
+    MinLength: 8
     NoEcho: true
 Metadata:
   AWS::CloudFormation::Interface:
@@ -93,25 +94,25 @@ Metadata:
         - DatabaseEngineVersion
     ParameterLabels:
       dbsubnetids:
-        default: "need two subnet ids for database subnet group"
+        default: "DB Subnet IDs"
       securitygroup:
-        default: "EC2 Security group for database instance"
+        default: "DB Security Group"
       DatabaseEngine:
-        default: "face it, it's postgres"
+        default: "Datbase Engine Name"
       DatabaseEngineVersion:
-        default: "Database Engine Version - accept the default unless you know what you're doing"
+        default: "Database Engine Version"
       EnvironmentSize:
-        default: Environment Size (S = 5GB, M = 20GB,L = 50GB)
+        default: "Database Environment Size"
       dbsubnetgroupdescription:
-        default: "database subnet group description"
+        default: "Database Subnet Group Description"
       databaseInstanceName:
-        default: "Name for the RDS database instance"
+        default: "Database Instance Name"
       databasename:
-        default: "name for the database"
+        default: "Database Name"
       dbuser:
-        default: "database user name"
+        default: "Database User Name"
       dbpassword:
-        default: "database password"
+        default: "Database User Password"
 Mappings:
   InstanceSize:
     SMALL:
