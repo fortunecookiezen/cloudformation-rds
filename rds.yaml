@@ -23,10 +23,6 @@ Parameters:
     Description: "email address of the the Owner of this stack"
     Default: "admin@root.com"
     AllowedPattern: "^[\\w-\\+]+(\\.[\\w]+)*@[\\w-]+(\\.[\\w]+)*(\\.[a-z]{2,})$"
-  vpcid:
-    Description: "Id of the vpc to deploy in"
-    Type: AWS::EC2::VPC::Id
-    ConstraintDescription: "Must be a valid VPC"
   dbsubnetids:
     Type: List<AWS::EC2::Subnet::Id>
     Description: "need two subnet ids for database subnet group"
@@ -80,18 +76,22 @@ Metadata:
         - Environment
         - Owner
       - Label:
-          default: "Network Configuration"
+          default: "Security Configuration"
         Parameters:
-        - vpcid
         - dbsubnetids
-        - TargetIp2
+        - securitygroup
+        - dbuser
+        - dbpassword
+      - Label:
+          default: "Database Configuration"
+        Parameters:
+        - databaseInstanceName
+        - databasename
+        - dbsubnetgroupdescription
+        - EnvironmentSize
+        - DatabaseEngine
+        - DatabaseEngineVersion
     ParameterLabels:
-      vpcid:
-        default: "VPC for the security group"
-      dbsubnetids:
-        default: "ip of the inbound resolver you will query"
-      securitygroup:
-        default: "ip of the inbound resolver you will query"
       dbsubnetids:
         default: "need two subnet ids for database subnet group"
       securitygroup:
@@ -161,7 +161,7 @@ Resources:
       AllocatedStorage: !FindInMap [InstanceSize, !Ref EnvironmentSize, SIZE] #Parameter minimum of 20 for gp2 Parameter groups example?
       AllowMajorVersionUpgrade: false #setting this as a safety
       AutoMinorVersionUpgrade: false #maybe this should be false. autoupgrade will break automation
-      BackupRetentionPeriod: 30
+      BackupRetentionPeriod: "30"
       CopyTagsToSnapshot: true #until proven otherwise
       DBInstanceClass: !FindInMap [InstanceSize, !Ref EnvironmentSize, DB]
       DBInstanceIdentifier: !Ref databaseInstanceName
@@ -207,4 +207,4 @@ Outputs:
     Description: "database port"
     Value: !GetAtt rdsinstance.Endpoint.Port
     Export:
-      Name: !Sub ''${ASI}-${Environment}-rdsinstance-port'
+      Name: !Sub '${ASI}-${Environment}-rdsinstance-port'
