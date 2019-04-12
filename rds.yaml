@@ -2,6 +2,27 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: 'Template to create an RDS instance and a DB subnet group for use in a VPC. Template creates a postgres instance in a single availability zone'
 Parameters:
+  ASI:
+    Type: String
+    MinLength: 3
+    MaxLength: 4
+    Description: "asi of the other account zone - must be lower-case, limit 4 characters"
+    AllowedPattern: "[a-z]*"
+  Environment:
+    Type: String
+    MinLength: 3
+    MaxLength: 4
+    Description: "environment (dev|itg|cat|prod)"
+    AllowedValues:
+      - "dev"
+      - "itg"
+      - "cat"
+      - "prod"
+  Owner:
+    Type: String
+    Description: "email address of the the Owner of this stack"
+    Default: "admin@root.com"
+    AllowedPattern: "^[\\w-\\+]+(\\.[\\w]+)*@[\\w-]+(\\.[\\w]+)*(\\.[a-z]{2,})$"
   vpcid:
     Description: "Id of the vpc to deploy in"
     Type: AWS::EC2::VPC::Id
@@ -49,6 +70,48 @@ Parameters:
     Type: String
     Description: "database password"
     NoEcho: true
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Environment Configuration"
+        Parameters:
+        - ASI
+        - Environment
+        - Owner
+      - Label:
+          default: "Network Configuration"
+        Parameters:
+        - vpcid
+        - dbsubnetids
+        - TargetIp2
+    ParameterLabels:
+      vpcid:
+        default: "VPC for the security group"
+      dbsubnetids:
+        default: "ip of the inbound resolver you will query"
+      securitygroup:
+        default: "ip of the inbound resolver you will query"
+      dbsubnetids:
+        default: "need two subnet ids for database subnet group"
+      securitygroup:
+        default: "EC2 Security group for database instance"
+      DatabaseEngine:
+        default: "face it, it's postgres"
+      DatabaseEngineVersion:
+        default: "Database Engine Version - accept the default unless you know what you're doing"
+      EnvironmentSize:
+        default: Environment Size (S = 5GB, M = 20GB,L = 50GB)
+      dbsubnetgroupdescription:
+        default: "database subnet group description"
+      databaseInstanceName:
+        default: "Name for the RDS database instance"
+      databasename:
+        default: "name for the database"
+      dbuser:
+        default: "database user name"
+      dbpassword:
+        default: "database password"
 Mappings:
   InstanceSize:
     SMALL:
@@ -126,6 +189,12 @@ Resources:
       Tags:
         - Key: Name
           Value: !Ref databasename
+        - Key: Owner
+          Value: !Ref Owner
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: ASI
+          Value: !Ref ASI
       VPCSecurityGroups:
         - !Ref securitygroup
 Outputs:
@@ -133,9 +202,9 @@ Outputs:
     Description: "database url"
     Value: !GetAtt rdsinstance.Endpoint.Address
     Export:
-      Name: !Sub '${AWS::StackName}-rdsinstance-url'
+      Name: !Sub '${ASI}-${Environment}-rdsinstance-url'
   dbport:
     Description: "database port"
     Value: !GetAtt rdsinstance.Endpoint.Port
     Export:
-      Name: !Sub '${AWS::StackName}-rdsinstance-port'
+      Name: !Sub ''${ASI}-${Environment}-rdsinstance-port'
